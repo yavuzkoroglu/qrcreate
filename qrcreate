@@ -56,7 +56,7 @@ fi
 arg=${1:-qr}
 job=${arg%.pdf}
 
-pdflatex -jobname=${1:-qr} <<EOF
+pdflatex -jobname="${job}" <<EOF
 \documentclass{standalone}
 \usepackage{hyperref}
 \usepackage{qrcodetikz}
@@ -66,4 +66,4 @@ pdflatex -jobname=${1:-qr} <<EOF
 EOF
 
 # Comment this for debugging
-rm -f ${job}.aux ${job}.log ${job}.out
+rm -f "${job}".aux "${job}".log "${job}".out
