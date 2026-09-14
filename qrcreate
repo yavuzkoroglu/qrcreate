@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+version='[2026-09-14]';
+
+if ! command -v pdflatex >/dev/null 2>&1
+then
+    echo '
+Please install pdflatex before using qrcreate.
+'
+    exit 1
+fi
+
+if [[ ${1} == "-h" || ${1} == "--help" ]]
+then
+    echo "
+qrcreate, version ${version}
+Copyright (c) 2026 Yavuz Köroğlu
+
+Usage: qrcreate [<OPTION>|<FILENAME>]
+
+OPTION:
+  -c, --copyright   Output the copyright message and exit.
+  -h, --help        Output this help message and exit.
+  -v, --version     Output the version information and exit.
+
+OUTPUT:
+  A PDF file containing the data given from standard input in the form of a QR code.
+  The QR code is a clickable hyperlink whenever possible.
+
+EXAMPLE USES:
+  echo \"https://web.itu.edu.tr/yakoroglu/\" | qrcreate myqr
+
+NOTES:
+  => No need to add .pdf extension to the FILENAME.
+  => The default FILENAME is qr.
+"
+    exit 0
+fi
+
+if [[ ${1} == "-v" || ${1} == "--version" ]]
+then
+    echo "
+qrcreate, version ${version}
+"
+    exit 0
+fi
+
+if [[ ${1} == "-c" || ${1} == "--copyright" ]]
+then
+    echo "
+Copyright (c) 2026 Yavuz Köroğlu
+"
+    exit 0
+fi
+
+# Default output file = qr.pdf
+arg=${1:-qr}
+job=${arg%.pdf}
+
+pdflatex -jobname=${1:-qr} <<EOF
+\documentclass{standalone}
+\usepackage{hyperref}
+\usepackage{qrcodetikz}
+\begin{document}
+\qrcode{$(cat)}
+\end{document}
+EOF
+
+# Comment this for debugging
+rm -f ${job}.aux ${job}.log ${job}.out
