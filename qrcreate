@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-version='[2026-09-14]';
+version='1.0.0';
 
 if ! command -v pdflatex >/dev/null 2>&1
 then
@@ -12,7 +12,7 @@ fi
 if [[ ${1} == "-h" || ${1} == "--help" ]]
 then
     echo "
-qrcreate, version ${version}
+qrcreate, v${version}
 Copyright (c) 2026 Yavuz Köroğlu
 
 Usage: qrcreate [<OPTION>|<FILENAME>]
@@ -38,9 +38,7 @@ fi
 
 if [[ ${1} == "-v" || ${1} == "--version" ]]
 then
-    echo "
-qrcreate, version ${version}
-"
+    echo "${version}"
     exit 0
 fi
 
