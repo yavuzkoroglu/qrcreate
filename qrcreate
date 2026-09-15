@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-version='1.0.0';
+version='1.1.0';
 
 if ! command -v pdflatex >/dev/null 2>&1
 then
@@ -15,23 +15,25 @@ then
 qrcreate, v${version}
 Copyright (c) 2026 Yavuz Köroğlu
 
-Usage: qrcreate [<OPTION>|<FILENAME>]
+Usage: qrcreate [<FILENAME>] [<OPTIONS>]
 
-OPTION:
+OPTIONS:
+  -n, --nolink      Make the generated QR code unclickable (default: clickable)
   -c, --copyright   Output the copyright message and exit.
   -h, --help        Output this help message and exit.
   -v, --version     Output the version information and exit.
 
 OUTPUT:
   A PDF file containing the data given from standard input in the form of a QR code.
-  The QR code is a clickable hyperlink whenever possible.
 
 EXAMPLE USES:
-  echo \"https://web.itu.edu.tr/yakoroglu/\" | qrcreate myqr
+  qrcreate qr-clickable <<< 'https://web.itu.edu.tr/yakoroglu/'
+  qrcreate -n qr-unclickable <<< 'https://web.itu.edu.tr/yakoroglu/'
 
 NOTES:
   => No need to add .pdf extension to the FILENAME.
   => The default FILENAME is qr.
+  => LaTeX special characters may not be processed correctly.
 "
     exit 0
 fi
@@ -57,7 +59,7 @@ job=${arg%.pdf}
 pdflatex -jobname="${job}" <<EOF
 \documentclass{standalone}
 \usepackage{hyperref}
-\usepackage{qrcodetikz}
+\usepackage${nolinks}{qrcodetikz}
 \begin{document}
 \qrcode{$(cat)}
 \end{document}
