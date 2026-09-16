@@ -18,7 +18,12 @@ fi
 
 if [[ $# -eq 0 ]]
 then
-    set -- "-h" "$@"
+    if [[ -t 0 ]]
+    then
+        set -- "-h" "$@"
+    else
+        set -- "-s" "$@"
+    fi
 fi
 
 while [[ $# -gt 0 ]]; do
@@ -176,10 +181,15 @@ done
 
 # Default output file = qr.pdf
 job=${ofname%.pdf}
+if [[ ! -t 0 ]]
+then
+    data="${data}$(cat)"
+fi
+
 if [[ -z "${data}" ]]
 then
     echo "ERROR: Cannot create the QR code of empty data." >&2
-    exit 1;
+    exit 1
 fi
 
 if [[ "${size}" == "auto" ]]

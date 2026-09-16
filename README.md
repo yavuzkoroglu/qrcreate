@@ -10,8 +10,8 @@ brew install yavuzkoroglu/tools/qrcreate
 
 # Example Uses
 
-The example below creates `qr.pdf`. The generated QR code is a clickable hyperlink thanks to `-l`.
+The example below creates `qr.pdf`. Thanks to `-l`, the QR code is a clickable hyperlink.
 
 ```
-qrcreate -d 'https://web.itu.edu.tr/yakoroglu/' -l
+qrcreate -l <<< 'https://web.itu.edu.tr/yakoroglu'
 ```
