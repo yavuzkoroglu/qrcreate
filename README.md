@@ -15,3 +15,11 @@ The example below creates `qr.pdf`. The generated QR code is a clickable hyperli
 ```
 qrcreate -l <<< 'https://web.itu.edu.tr/yakoroglu/'
 ```
+
+# Usage Details
+
+Print information about all command-line parameters using the command below.
+
+```
+qrcreate -h
+```
