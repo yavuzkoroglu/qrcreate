@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-version='2.0.0'
+version='2.1.0'
 link='nolink'
 fname='qr'
 size='auto'
@@ -48,8 +48,10 @@ OPTIONS:
   -h, --help                        Output this help message and exit.
   -l, --link                        Make the generated QR code clickable (default: nolink).
   -L, --level L|M|Q|H               Set error correction level ('Low', default: 'Medium', 'Quality', or 'High').
-  -n, --nruns <NUMBER>              Specify the number of re-compilations (default: 2).
-  -p, --padding padding|tight       Set padding around the QR code ('padding', or default: 'tight')
+  -n, --nolink                      Make the generated QR code unclickable (default: nolink).
+  -N, --nruns <NUMBER>              Specify the number of re-compilations (default: 2).
+  -p, --padding                     Set padding around the QR code to non-zero (default: tight).
+  -t, --tight                       Set padding around the QR code to zero (default: tight).
   -s, --size <NUMBER>|auto          Set the QR size (default: auto, otherwise a value btw. 1-40).
   -v, --version                     Output the version information and exit.
 
@@ -57,9 +59,9 @@ OUTPUT:
   A PDF file containing the data given from standard input in the form of a QR code.
 
 EXAMPLE USES:
-  qrcreate -l -L M -n 2 -p padding -s auto -f clickable <<< 'https://web.itu.edu.tr/yakoroglu/'
+  qrcreate -l -L M -N 1 -p -s auto -f clickable <<< 'https://web.itu.edu.tr/yakoroglu/'
 
-  Creates 'clickable.pdf' with a clickable hyperlink, medium error correction, 2 recompilations with 'pdflatex', some padding around the borders, and automatically calculated size.
+  Creates 'clickable.pdf' with a clickable hyperlink, medium error correction, only 1 recompilation through 'pdflatex', some padding around the borders, and automatically calculated size.
 
 NOTE:
   !! LaTeX special characters may not be processed correctly. See qrcodetikz CTAN package for details.
@@ -81,7 +83,10 @@ NOTE:
                     ;;
             esac
             ;;
-        -n|--nruns)
+        -n|--nolink)
+            link='nolink'
+            ;;
+        -N|--nruns)
             shift
             case "${1}" in
                 ''|*[!0-9]*)
@@ -94,16 +99,7 @@ NOTE:
             esac
             ;;
         -p|--padding)
-            shift
-            case "${1}" in
-                padding|tight)
-                    pad="${1}"
-                    ;;
-                *)
-                    echo "ERROR: Missing 'padding' or 'tight' after -p or --padding." >&2
-                    exit 1;
-                    ;;
-            esac
+            pad='padding'
             ;;
         -s|--size)
             shift
@@ -120,6 +116,9 @@ NOTE:
                     exit 1;
                     ;;
             esac
+            ;;
+        -t|--tight)
+            pad='tight'
             ;;
         -v|--version)
             echo "${version}"
