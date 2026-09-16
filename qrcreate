@@ -136,7 +136,7 @@ job=${fname%.pdf}
 inp=$(cat)
 if [[ "${size}" == "auto" ]]
 then
-    size=","
+    size=""
 else
     size=",version=${size}"
 fi
