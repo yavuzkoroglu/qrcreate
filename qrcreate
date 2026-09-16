@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-version='2.1.1'
+version='3.0.0'
+data=
 link='nolink'
-fname='qr'
+ofname='qr'
 size='auto'
 level='M'
 pad='tight'
@@ -15,6 +16,11 @@ Please install pdflatex before using qrcreate.
     exit 1
 fi
 
+if [[ $# -eq 0 ]]
+then
+    set -- "-h" "$@"
+fi
+
 while [[ $# -gt 0 ]]; do
     case "${1}" in
         -c|--copyright)
@@ -23,15 +29,15 @@ Copyright (c) 2026 Yavuz Köroğlu
 "
             exit 0
             ;;
-        -f|--filename)
+        -d|--data-str)
             shift
             case "${1}" in
-                -*|'')
-                    echo "ERROR: No FILENAME given after -f or --filename." >&2
-                    exit 1
+                '')
+                    echo "ERROR: No data given after -d or --data-str" >&2
+                    exit 1;
                     ;;
                 *)
-                    fname="${1}"
+                    data="${data}${1}"
                     ;;
             esac
             ;;
@@ -40,33 +46,55 @@ Copyright (c) 2026 Yavuz Köroğlu
 qrcreate, v${version}
 Copyright (c) 2026 Yavuz Köroğlu
 
-Usage: qrcreate [<OPTIONS>]
+Usage: qrcreate <OPTIONS>
 
 OPTIONS:
   -c, --copyright                   Output the copyright message and exit.
-  -f, --filename <FILENAME>         Set the filename without the .pdf extension (default: qr).
+  -d, --data-str <STRING>           Set the data to be encoded to <STRING>.
   -h, --help                        Output this help message and exit.
+  -i, --input-filename <FILENAME>   Load data to be encoded from <FILENAME>.
   -l, --link                        Make the generated QR code clickable (default: nolink).
   -L, --level L|M|Q|H               Set error correction level ('Low', default: 'Medium', 'Quality', or 'High').
   -n, --nolink                      Make the generated QR code unclickable (default: nolink).
   -N, --nruns <NUMBER>              Specify the number of re-compilations (default: 2).
+  -o, --output-filename <FILENAME>  Set the output filename without the .pdf extension (default: qr).
   -p, --padding                     Set padding around the QR code to non-zero (default: tight).
   -t, --tight                       Set padding around the QR code to zero (default: tight).
-  -s, --size <NUMBER>|auto          Set the QR size (default: auto, otherwise a value btw. 1-40).
+  -s, --stdin                       Load data to be encoded from standard input.
+  -S, --size <NUMBER>|auto          Set the QR size (default: auto, otherwise a value btw. 1-40).
   -v, --version                     Output the version information and exit.
 
 OUTPUT:
-  A PDF file containing the data given from standard input in the form of a QR code.
+  A PDF file containing a QR code of the given data.
 
 EXAMPLE USES:
-  qrcreate -l -L M -N 1 -p -s auto -f clickable <<< 'https://web.itu.edu.tr/yakoroglu/'
-
-  Creates 'clickable.pdf' with a clickable hyperlink, medium error correction, only 1 recompilation through 'pdflatex', some padding around the borders, and automatically calculated size.
+  qrcreate -d "https://web.itu.edu.tr/yakoroglu" -l -p -o myqr.pdf
+  qrcreate -d 'https://' -s -d '/yakoroglu' -l -p -o myqr.pdf <<< 'web.itu.edu.tr'
+  qrcreate -d 'https://' -i "example.txt" -s -l -p -o myqr.pdf <<< '/yakoroglu'
 
 NOTE:
-  !! LaTeX special characters may not be processed correctly. See qrcodetikz CTAN package for details.
+  => Multiple data sources will be concatenated in the given order.
+  => LaTeX special characters may not be processed correctly. See qrcodetikz CTAN package for details.
 "
             exit 0
+            ;;
+        -i|--input-filename)
+            shift
+            case "${1}" in
+                -*|'')
+                    echo "ERROR: No FILENAME given after -i or --input-filename." >&2
+                    exit 1
+                    ;;
+                *)
+                    if [[ -f "${1}" ]]
+                    then
+                        data="${data}$(cat ${1})"
+                    else
+                        echo "ERROR: No such file -- '${1}'." >&2
+                        exit 1
+                    fi
+                    ;;
+            esac
             ;;
         -l|--link)
             link='link'
@@ -90,7 +118,7 @@ NOTE:
             shift
             case "${1}" in
                 ''|*[!0-9]*)
-                    echo "ERROR: Missing NUMBER after -n or --nruns." >&2
+                    echo "ERROR: Missing valid NUMBER after -n or --nruns." >&2
                     exit 1
                     ;;
                 *)
@@ -98,10 +126,25 @@ NOTE:
                     ;;
             esac
             ;;
+        -o|--output-filename)
+            shift
+            case "${1}" in
+                -*|'')
+                    echo "ERROR: No FILENAME given after -o or --output-filename." >&2
+                    exit 1
+                    ;;
+                *)
+                    ofname="${1}"
+                    ;;
+            esac
+            ;;
         -p|--padding)
             pad='padding'
             ;;
-        -s|--size)
+        -s|--stdin)
+            data="${data}$(cat)"
+            ;;
+        -S|--size)
             shift
             case "${1}" in
                 auto|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40)
@@ -132,8 +175,13 @@ NOTE:
 done
 
 # Default output file = qr.pdf
-job=${fname%.pdf}
-inp=$(cat)
+job=${ofname%.pdf}
+if [[ -z "${data}" ]]
+then
+    echo "ERROR: Cannot create the QR code of empty data." >&2
+    exit 1;
+fi
+
 if [[ "${size}" == "auto" ]]
 then
     size=""
@@ -148,7 +196,7 @@ pdflatex -jobname="${job}" <<EOF
 \usepackage{hyperref}
 \usepackage[${link}]{qrcodetikz}
 \begin{document}
-\qrcode[level=${level}${size},${pad}]{${inp}}
+\qrcode[level=${level}${size},${pad}]{${data}}
 \end{document}
 EOF
 done
