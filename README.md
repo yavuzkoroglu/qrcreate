@@ -1,7 +1,7 @@
 # qrcreate
 A small Unix-style Bash utility that converts stdin into a standalone QR code PDF using `pdflatex`.
 
-# Install Using `brew`
+# Install Using `homebrew`
 
 ```
 brew tap yavuzkoroglu/tools
