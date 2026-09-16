@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-version='1.1.0';
+version='2.0.0'
+link='nolink'
+fname='qr'
+size='auto'
+level='M'
+pad='tight'
+nruns=2
 
 if ! command -v pdflatex >/dev/null 2>&1
 then
@@ -9,61 +15,144 @@ Please install pdflatex before using qrcreate.
     exit 1
 fi
 
-if [[ ${1} == "-h" || ${1} == "--help" ]]
-then
-    echo "
+while [[ $# -gt 0 ]]; do
+    case "${1}" in
+        -c|--copyright)
+        echo "
+Copyright (c) 2026 Yavuz Köroğlu
+"
+            exit 0
+            ;;
+        -f|--filename)
+            shift
+            case "${1}" in
+                -*|'')
+                    echo "ERROR: No FILENAME given after -f or --filename." >&2
+                    exit 1
+                    ;;
+                *)
+                    fname="${1}"
+                    ;;
+            esac
+            ;;
+        -h|--help)
+            echo "
 qrcreate, v${version}
 Copyright (c) 2026 Yavuz Köroğlu
 
-Usage: qrcreate [<FILENAME>] [<OPTIONS>]
+Usage: qrcreate [<OPTIONS>]
 
 OPTIONS:
-  -n, --nolink      Make the generated QR code unclickable (default: clickable)
-  -c, --copyright   Output the copyright message and exit.
-  -h, --help        Output this help message and exit.
-  -v, --version     Output the version information and exit.
+  -c, --copyright                   Output the copyright message and exit.
+  -f, --filename <FILENAME>         Set the filename without the .pdf extension (default: qr).
+  -h, --help                        Output this help message and exit.
+  -l, --link                        Make the generated QR code clickable (default: nolink).
+  -L, --level L|M|Q|H               Set error correction level ('Low', default: 'Medium', 'Quality', or 'High').
+  -n, --nruns <NUMBER>              Specify the number of re-compilations (default: 2).
+  -p, --padding padding|tight       Set padding around the QR code ('padding', or default: 'tight')
+  -s, --size <NUMBER>|auto          Set the QR size (default: auto, otherwise a value btw. 1-40).
+  -v, --version                     Output the version information and exit.
 
 OUTPUT:
   A PDF file containing the data given from standard input in the form of a QR code.
 
 EXAMPLE USES:
-  qrcreate qr-clickable <<< 'https://web.itu.edu.tr/yakoroglu/'
-  qrcreate -n qr-unclickable <<< 'https://web.itu.edu.tr/yakoroglu/'
+  qrcreate -l -L M -n 2 -p padding -s auto -f clickable <<< 'https://web.itu.edu.tr/yakoroglu/'
 
-NOTES:
-  => No need to add .pdf extension to the FILENAME.
-  => The default FILENAME is qr.
-  => LaTeX special characters may not be processed correctly.
+  Creates 'clickable.pdf' with a clickable hyperlink, medium error correction, 2 recompilations with 'pdflatex', some padding around the borders, and automatically calculated size.
+
+NOTE:
+  !! LaTeX special characters may not be processed correctly. See qrcodetikz CTAN package for details.
 "
-    exit 0
-fi
-
-if [[ ${1} == "-v" || ${1} == "--version" ]]
-then
-    echo "${version}"
-    exit 0
-fi
-
-if [[ ${1} == "-c" || ${1} == "--copyright" ]]
-then
-    echo "
-Copyright (c) 2026 Yavuz Köroğlu
-"
-    exit 0
-fi
+            exit 0
+            ;;
+        -l|--link)
+            link='link'
+            ;;
+        -L|--level)
+            shift
+            case "${1}" in
+                L|M|Q|H)
+                    level=${1}
+                    ;;
+                *)
+                    echo "ERROR: Unknown level ${1}, it must be L, M, Q, or H." >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        -n|--nruns)
+            shift
+            case "${1}" in
+                ''|*[!0-9]*)
+                    echo "ERROR: Missing NUMBER after -n or --nruns." >&2
+                    exit 1
+                    ;;
+                *)
+                    nruns="${1}"
+                    ;;
+            esac
+            ;;
+        -p|--padding)
+            shift
+            case "${1}" in
+                padding|tight)
+                    pad="${1}"
+                    ;;
+                *)
+                    echo "ERROR: Missing 'padding' or 'tight' after -p or --padding." >&2
+                    exit 1;
+                    ;;
+            esac
+            ;;
+        -s|--size)
+            shift
+            case "${1}" in
+                auto|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40)
+                    size="${1}"
+                    ;;
+                -*|'')
+                    echo "ERROR: Missing NUMBER or 'auto' after -s or --size." >&2
+                    exit 1;
+                    ;;
+                *)
+                    echo "ERROR: Size must be 'auto' or a NUMBER btw. 1-40." >&2
+                    exit 1;
+                    ;;
+            esac
+            ;;
+        -v|--version)
+            echo "${version}"
+            exit 0
+            ;;
+        *)
+            echo "WARNING: Ignoring unknown option ${1}" >&2
+            ;;
+    esac
+    shift
+done
 
 # Default output file = qr.pdf
-arg=${1:-qr}
-job=${arg%.pdf}
+job=${fname%.pdf}
+inp=$(cat)
+if [[ "${size}" == "auto" ]]
+then
+    size=","
+else
+    size=",version=${size}"
+fi
 
+for i in $(seq ${nruns})
+do
 pdflatex -jobname="${job}" <<EOF
 \documentclass{standalone}
 \usepackage{hyperref}
-\usepackage${nolinks}{qrcodetikz}
+\usepackage[${link}]{qrcodetikz}
 \begin{document}
-\qrcode{$(cat)}
+\qrcode[level=${level}${size},${pad}]{${inp}}
 \end{document}
 EOF
+done
 
 # Comment this for debugging
 rm -f "${job}".aux "${job}".log "${job}".out

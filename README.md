@@ -1,5 +1,5 @@
 # qrcreate
-A small Unix-style Bash utility that converts stdin into a standalone QR code PDF using `pdflatex`. The generated QR code is by default clickable.
+A small Unix-style Bash utility that converts stdin into a standalone QR code PDF using `pdflatex`.
 
 # Install Using `brew`
 
@@ -10,8 +10,8 @@ brew install yavuzkoroglu/tools/qrcreate
 
 # Example Uses
 
-The example below creates `myqr.pdf`. The PDF contains a clickable QR code link to the given website.
+The example below creates `qr.pdf`. The generated QR code is a clickable hyperlink thanks to `-l`.
 
 ```
-qrcreate myqr <<< 'https://web.itu.edu.tr/yakoroglu/'
+qrcreate -l <<< 'https://web.itu.edu.tr/yakoroglu/'
 ```
