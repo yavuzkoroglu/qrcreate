@@ -149,8 +149,12 @@ if [[ $# -eq 0 ]]
 then
     if [[ -t 0 ]]
     then
+        # No parameter is given and no pipes are redirected.
+        # Behave as if -h is specified.
         set -- "-h" "$@"
     else
+        # No parameter is given but a pipe is redirected.
+        # Behave as if -s is specified.
         set -- "-s" "$@"
     fi
 fi
