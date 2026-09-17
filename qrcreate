@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-version='3.1.0'
+version='3.1.1'
 data=
 link='nolink'
 ofname='qr'
@@ -8,58 +8,14 @@ level='M'
 pad='tight'
 nruns=2
 
-if ! command -v pdflatex >/dev/null 2>&1
-then
+echoCopyright() {
     echo '
-Please install pdflatex before using qrcreate.
-'
-    exit 1
-fi
-
-if [[ $# -eq 0 ]]
-then
-    if [[ -t 0 ]]
-    then
-        set -- "-h" "$@"
-    else
-        set -- "-s" "$@"
-    fi
-fi
-
-while [[ $# -gt 0 ]]; do
-    case "${1}" in
-        -c|--copyright)
-        echo "
 Copyright (c) 2026 Yavuz Köroğlu
-"
-            exit 0
-            ;;
-        -d|--data-str)
-            shift
-            case "${1}" in
-                '')
-                    echo "ERROR: No data given after -d or --data-str" >&2
-                    exit 1;
-                    ;;
-                *)
-                    data="${data}${1}"
-                    ;;
-            esac
-            ;;
-        -d=*|--data-str=*)
-            newdata="${1#*=}"
-            case "${newdata}" in
-                '')
-                    echo "ERROR: No data given after -d= or --data-str=" >&2
-                    exit 1;
-                    ;;
-                *)
-                    data="${data}${newdata}"
-                    ;;
-            esac
-            ;;
-        -h|--help)
-            echo "
+'
+}
+
+echoUsage() {
+    echo "
 qrcreate, v${version}
 Copyright (c) 2026 Yavuz Köroğlu
 
@@ -93,115 +49,162 @@ NOTE:
   => Multiple data sources will be concatenated in the given order.
   => LaTeX special characters may not be processed correctly. See qrcodetikz CTAN package for details.
 "
+}
+
+echoVersion() {
+    echo "${version}"
+}
+
+processDataStr() {
+    case "${1}" in
+        '')
+            echo "ERROR: No data given after -d or --data-str" >&2
+            exit 1;
+            ;;
+        *)
+            data="${data}${1}"
+            ;;
+    esac
+}
+
+processInputFile() {
+    case "${1}" in
+        -*|'')
+            echo "ERROR: No FILENAME given after -i or --input-filename." >&2
+            exit 1
+            ;;
+        *)
+            if [[ -f "${1}" ]]
+            then
+                data="${data}$(cat ${1})"
+            else
+                echo "ERROR: No such file -- '${1}'." >&2
+                exit 1
+            fi
+            ;;
+    esac
+}
+
+processLevel() {
+    case "${1}" in
+        L|M|Q|H)
+            level=${1}
+            ;;
+        *)
+            echo "ERROR: Unknown level ${1}, it must be L, M, Q, or H." >&2
+            exit 1
+            ;;
+    esac
+}
+
+processNRuns() {
+    case "${1}" in
+        ''|*[!0-9]*)
+            echo "ERROR: Missing valid NUMBER after -n or --nruns." >&2
+            exit 1
+            ;;
+        *)
+            nruns="${1}"
+            ;;
+    esac
+}
+
+processOutputFile() {
+    case "${1}" in
+        -*|'')
+            echo "ERROR: No FILENAME given after -o or --output-filename." >&2
+            exit 1
+            ;;
+        *)
+            ofname="${1}"
+            ;;
+    esac
+}
+
+processSize() {
+    case "${1}" in
+auto|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40)
+            size="${1}"
+            ;;
+        -*|'')
+            echo "ERROR: Missing NUMBER or 'auto' after -s or --size." >&2
+            exit 1;
+            ;;
+        *)
+            echo "ERROR: Size must be 'auto' or a NUMBER btw. 1-40." >&2
+            exit 1;
+            ;;
+    esac
+}
+
+if ! command -v pdflatex >/dev/null 2>&1
+then
+    echo '
+Please install pdflatex before using qrcreate.
+'
+    exit 1
+fi
+
+if [[ $# -eq 0 ]]
+then
+    if [[ -t 0 ]]
+    then
+        set -- "-h" "$@"
+    else
+        set -- "-s" "$@"
+    fi
+fi
+
+while [[ $# -gt 0 ]]; do
+    case "${1}" in
+        -c|--copyright)
+            echoCopyright
+            exit 0
+            ;;
+        -d|--data-str)
+            shift
+            processDataStr "${1}"
+            ;;
+        -d=*|--data-str=*)
+            processDataStr "${1#*=}"
+            ;;
+        -h|--help)
+            echoUsage
             exit 0
             ;;
         -i|--input-filename)
             shift
-            case "${1}" in
-                -*|'')
-                    echo "ERROR: No FILENAME given after -i or --input-filename." >&2
-                    exit 1
-                    ;;
-                *)
-                    if [[ -f "${1}" ]]
-                    then
-                        data="${data}$(cat ${1})"
-                    else
-                        echo "ERROR: No such file -- '${1}'." >&2
-                        exit 1
-                    fi
-                    ;;
-            esac
+            processInputFile "${1}"
             ;;
         -i=*|--input-filename=*)
-            ifname="${1#*=}"
-            echo $ifname
-            case "${ifname}" in
-                -*|'')
-                    echo "ERROR: No FILENAME given after -i= or --input-filename=." >&2
-                    exit 1
-                    ;;
-                *)
-                    if [[ -f "${ifname}" ]]
-                    then
-                        data="${data}$(cat ${ifname})"
-                    else
-                        echo "ERROR: No such file -- '${ifname}'." >&2
-                        exit 1
-                    fi
-                    ;;
-            esac
+            processInputFile "${1#*=}"
             ;;
         -l|--link)
             link='link'
             ;;
         -L|--level)
             shift
-            case "${1}" in
-                L|M|Q|H)
-                    level=${1}
-                    ;;
-                *)
-                    echo "ERROR: Unknown level ${1}, it must be L, M, Q, or H." >&2
-                    exit 1
-                    ;;
-            esac
+            processLevel "${1}"
             ;;
         -L=*|--level=*)
-            level="${1#*=}"
-            case "${level}" in
-                L|M|Q|H)
-                    ;;
-                *)
-                    echo "ERROR: Unknown level ${level}, it must be L, M, Q, or H." >&2
-                    exit 1
-                    ;;
-            esac
+            processLevel "${1#*=}"
             ;;
         -n|--nolink)
             link='nolink'
             ;;
         -N|--nruns)
             shift
-            case "${1}" in
-                ''|*[!0-9]*)
-                    echo "ERROR: Missing valid NUMBER after -n or --nruns." >&2
-                    exit 1
-                    ;;
-                *)
-                    nruns="${1}"
-                    ;;
-            esac
+            processNRuns "${1}"
             ;;
         -N=*|--nruns=*)
-            nruns="${1#*=}"
-            case "${nruns}" in
-                ''|*[!0-9]*)
-                    echo "ERROR: Missing valid NUMBER after -n= or --nruns=." >&2
-                    exit 1
-                    ;;
-            esac
+            processNRuns "${1#*=}"
             ;;
         -o|--output-filename)
             shift
-            case "${1}" in
-                -*|'')
-                    echo "ERROR: No FILENAME given after -o or --output-filename." >&2
-                    exit 1
-                    ;;
-                *)
-                    ofname="${1}"
-                    ;;
-            esac
+            processOutputFile "${1}"
             ;;
         -o=*|--output-filename=*)
-            ofname="${1#*=}"
-            case "${ofname}" in
-                -*|'')
-                    echo "ERROR: No FILENAME given after -o or --output-filename." >&2
-                    exit 1
-                    ;;
-            esac
+            processOutputFile "${1#*=}"
             ;;
         -p|--padding)
             pad='padding'
@@ -211,68 +214,35 @@ NOTE:
             ;;
         -S|--size)
             shift
-            case "${1}" in
-                auto|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40)
-                    size="${1}"
-                    ;;
-                -*|'')
-                    echo "ERROR: Missing NUMBER or 'auto' after -s or --size." >&2
-                    exit 1;
-                    ;;
-                *)
-                    echo "ERROR: Size must be 'auto' or a NUMBER btw. 1-40." >&2
-                    exit 1;
-                    ;;
-            esac
+            processSize "${1}"
             ;;
         -S=*|--size=*)
-            size="${1#*=}"
-            case "${size}" in
-                auto|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40)
-                    ;;
-                -*|'')
-                    echo "ERROR: Missing NUMBER or 'auto' after -s= or --size=." >&2
-                    exit 1;
-                    ;;
-                *)
-                    echo "ERROR: Size must be 'auto' or a NUMBER btw. 1-40." >&2
-                    exit 1;
-                    ;;
-            esac
+            processSize "${1#*=}"
             ;;
         -t|--tight)
             pad='tight'
             ;;
         -v|--version)
-            echo "${version}"
+            echoVersion
             exit 0
             ;;
         *)
-            echo "WARNING: Ignoring unknown option ${1}" >&2
+            echo "ERROR: Unknown option ${1}" >&2
+            exit 1
             ;;
     esac
     shift
 done
 
-# Default output file = qr.pdf
+# If -s is NOT specified, but some pipe is redirected, behave as if there was a -s at the end.
+if [[ ! -t 0 ]]; then data="${data}$(cat)"; fi
+
+# If data is still empty, give ERROR.
+if [[ -z "${data}" ]]; then echo "ERROR: Cannot create the QR code of empty data." >&2; exit 1; fi
+
+if [[ "${size}" == "auto" ]]; then size=""; else size=",version=${size}"; fi
+
 job=${ofname%.pdf}
-if [[ ! -t 0 ]]
-then
-    data="${data}$(cat)"
-fi
-
-if [[ -z "${data}" ]]
-then
-    echo "ERROR: Cannot create the QR code of empty data." >&2
-    exit 1
-fi
-
-if [[ "${size}" == "auto" ]]
-then
-    size=""
-else
-    size=",version=${size}"
-fi
 
 for i in $(seq ${nruns})
 do
