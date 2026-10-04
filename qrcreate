@@ -255,13 +255,12 @@ if [[ "${size}" == "auto" ]]; then size=""; else size=",version=${size}"; fi
 
 job=${ofname%.pdf}
 
-tmp=$(mktemp)
-status=$?
-if [ ${status} -ne 0 ]
+if ! tmp=$(mktemp)
 then
     echo "ERROR: Cannot create a temporary file." >&2
     exit 1
 fi
+trap 'rm -f "${tmp}"' EXIT
 
 printf '%s' "${data}" > "${tmp}"
 
@@ -278,9 +277,8 @@ if ! pdflatex -jobname="${job}" <<EOF
 EOF
 then
     echo "ERROR: pdflatex failed" >&2
-    rm -f "${tmp}"
     exit 1
 fi
 done
 
-rm -f "${job}".aux "${job}".log "${job}".out "${tmp}"
+rm -f "${job}".aux "${job}".log "${job}".out
