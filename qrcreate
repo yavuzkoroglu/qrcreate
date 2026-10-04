@@ -47,7 +47,6 @@ EXAMPLE USES:
 
 NOTE:
   => Multiple data sources will be concatenated in the given order.
-  => LaTeX special characters may not be processed correctly. See qrcodetikz CTAN package for details.
 "
 }
 
