@@ -266,7 +266,7 @@ fi
 
 printf '%s' "${data}" > "${tmp}"
 
-for i in {1..${nruns}}
+for ((i = 1; i <= nruns; i++))
 do
 if ! pdflatex -jobname="${job}" <<EOF
 \documentclass{standalone}
