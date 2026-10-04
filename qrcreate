@@ -30,7 +30,7 @@ OPTIONS:
   -L, --level L|M|Q|H               Set error correction level ('Low', default: 'Medium', 'Quality', or 'High').
   -n, --nolink                      Make the generated QR code unclickable (default: nolink).
   -N, --nruns <NUMBER>              Specify the number of re-compilations (default: 2).
-  -o, --output-filename <FILENAME>  Set the output filename without the .pdf extension (default: qr).
+  -o, --output-filename <FILENAME>  Set the output filename without the PDF extension (default: qr).
   -p, --padding                     Set padding around the QR code to non-zero (default: tight).
   -t, --tight                       Set padding around the QR code to zero (default: tight).
   -s, --stdin                       Load data to be encoded from standard input.
@@ -253,8 +253,6 @@ if [[ -z "${data}" ]]; then echo "ERROR: Cannot create the QR code of empty data
 
 if [[ "${size}" == "auto" ]]; then size=""; else size=",version=${size}"; fi
 
-job=${ofname%.pdf}
-
 if ! tmp=$(mktemp)
 then
     echo "ERROR: Cannot create a temporary file." >&2
@@ -263,6 +261,8 @@ fi
 trap 'rm -f "${tmp}"' EXIT
 
 printf '%s' "${data}" > "${tmp}"
+
+job=${ofname%.pdf}
 
 for ((i = 1; i <= nruns; i++))
 do
