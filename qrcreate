@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-version='3.1.2'
+version='3.1.3'
 data=
 link='nolink'
 ofname='qr'
@@ -268,11 +268,21 @@ for ((i = 1; i <= nruns; i++))
 do
 if ! pdflatex -jobname="${job}" <<EOF
 \documentclass{standalone}
-\usepackage{csvsimple}
+\usepackage{catchfile}
 \usepackage{hyperref}
 \usepackage[${link}]{qrcodetikz}
+
+\makeatletter
+\CatchFileDef\qrdata{${tmp}}{%
+    \let\do\@makeother
+    \dospecials
+    \endlinechar=-1
+    \catcode32=12
+}
+\makeatother
+
 \begin{document}
-\csvreader[no head,respect all]{${tmp}}{}{\qrcode[level=${level}${size},${pad}]{\csvcoli}}
+\qrcode[level=${level}${size},${pad}]{\qrdata}
 \end{document}
 EOF
 then
